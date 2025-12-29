@@ -4,6 +4,8 @@ import elgamal as eg
 import rabin_signature as rs
 import shared as sh
 import json
+import subprocess
+import platform
 
 user_data = {
     'alice': {
@@ -51,11 +53,7 @@ def receive_message(to_user, cipher_email, elgamal_c1, elgamal_c2, sign, rabin_n
 
     ## Verify signature
     if rs.verify(msg, sign, rabin_n):
-        print(f'Signature: Verified\nGot message:\n{msg}')
         user_data[to_user]['messages'].append(msg)
-    else:
-        print(f'Rejected message: Received Invalid Signature.')
-
 
 def check_password(username1, password1):
     with open("data.json", "r") as f:
@@ -65,44 +63,65 @@ def check_password(username1, password1):
             return user["password"] == password1
     return False
 
-start_action = int(input("Welcome!\nPress 1 to Log in\nPress 2 to exist\n"))
+
+def clear_console_subprocess():
+    if platform.system() == "Windows":
+        subprocess.run("cls", shell=True)
+    else:
+        # For Linux and Mac
+        subprocess.run("clear", shell=True)
+
+START_MSG = 'Welcome!\n1. Login\n2. Exit\n\n'
+LOGGED_MSG = '\n1. Send Message\n2. Read Messages\n3. Log Out\n4. Exit\n\n'
+
+clear_console_subprocess()
+
+start_action = int(input(START_MSG))
 while start_action != 2:
+    clear_console_subprocess()
     username = input('Enter Username: ')
-    password = input('Enter your password: ')
+    password = input('Enter Password: ')
     if not check_password(username, str(sh.hash_message_hex(password))):
         print("Username or password is incorrect.")
         start_action = int(input("Do you wish to try again?\n1 for yes\n2 for no\n"))
     else:
+        clear_console_subprocess()
         print(f'Welcome {username}!')
-        action = input('Click 1 to send a message\nClick 2 to read your messages\nClick 3 to log out\nClick 4 to exit\n')
+        action = input(LOGGED_MSG)
         while True:
+            clear_console_subprocess()
+
             if action == '1':
-                print("Here is your contact lists:\n")
+                print("Contact List:\n")
                 counter = 0
                 for user in user_data.keys():
                     if user != username:
                         counter += 1
                         print(f"{counter}. {user}")
-                print("\nPlease state who you want to send a message to:\n")
-                to_user1 = input()
+
+                to_user1 = input('\nTo: ')
                 while to_user1 not in user_data:
                     to_user1 = input('User does not exist! please try again! \nEnter Username: ')
+
                 if to_user1 in user_data:
-                    send_message(username, to_user1, input('Enter a message to send: '))
+                    send_message(username, to_user1, input('Message: '))
+
+                    clear_console_subprocess()
                     print("Message sent successfully")
             elif action == '2':
-                if not user_data[username]:
+                if not user_data[username]['messages']:
                     print("Your inbox is empty.")
                 else:
-                    print(f"Here are your messages for {username}:")
+                    print(f"Inbox:")
                     for i, msg in enumerate(user_data[username]['messages'], start=1):
                         print(f"{i}. {msg}")
             elif action == '3':
                 print("Logged out successfully\n")
-                start_action = int(input("Welcome!\n Press 1 to Log in\n Press 2 to exist\n"))
+                start_action = int(input(START_MSG))
                 break
             elif action == '4':
                 start_action = 2
                 break
-            action = input('Click 1 to send a message\nClick 2 to read your messages\nClick 3 to log out\nClick 4 to exit\n')
+            action = input(LOGGED_MSG)
+
 print("Good bye!")
