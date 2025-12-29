@@ -1,0 +1,9 @@
+{
+  "users": [
+    {
+      "username": "alice",
+      "password": "36411507dfadca075e942a499924c89e1c6c2df6bf11e2fd841ec67168de9dff"},
+    { "username": "bob",
+      "password": "d06f8bb9ba0a04ac944c7cecac0aaf7addcc9b7c0ae650325f6bac580849139a"}
+  ]
+}
