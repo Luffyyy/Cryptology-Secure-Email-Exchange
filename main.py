@@ -17,7 +17,7 @@ user_data = {
 } # Dummy database
 
 def send_message(from_user, to_user, msg):
-    msg = f'\tFROM: {from_user}\n\tMessage: {msg}'
+    msg = f'\tTo: {to_user}\n\tFrom: {from_user}\n{msg}'
     # Alice (Sender, Creates a key for Chacha20 and sends an Email to Bob)
     
     ## Chacha20 Symmetric Algorithm
@@ -82,8 +82,9 @@ while start_action != 2:
     username = input('Enter Username: ')
     password = input('Enter Password: ')
     if not check_password(username, str(sh.hash_message_hex(password))):
-        print("Username or password is incorrect.")
-        start_action = int(input("Do you wish to try again?\n1 for yes\n2 for no\n"))
+        clear_console_subprocess()
+        print("Username or password is incorrect.\n")
+        start_action = int(input("Try Again?\n1. Yes\n2. No\n\n"))
     else:
         clear_console_subprocess()
         print(f'Welcome {username}!')
@@ -104,7 +105,9 @@ while start_action != 2:
                     to_user1 = input('User does not exist! please try again! \nEnter Username: ')
 
                 if to_user1 in user_data:
-                    send_message(username, to_user1, input('Message: '))
+                    subject = input("Subject: ")
+                    msg = input('Message: ')
+                    send_message(username, to_user1, f'\tSubject: {subject}\n\tMessage: {msg}')
 
                     clear_console_subprocess()
                     print("Message sent successfully")
@@ -114,7 +117,7 @@ while start_action != 2:
                 else:
                     print(f"Inbox:")
                     for i, msg in enumerate(user_data[username]['messages'], start=1):
-                        print(f"{i}. {msg}")
+                        print(f"{i}.\n{msg}")
             elif action == '3':
                 print("Logged out successfully\n")
                 start_action = int(input(START_MSG))
