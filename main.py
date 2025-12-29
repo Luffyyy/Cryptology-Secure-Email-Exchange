@@ -6,6 +6,7 @@ import shared as sh
 import json
 import subprocess
 import platform
+import getpass
 
 user_data = {
     'alice': {
@@ -80,7 +81,7 @@ start_action = int(input(START_MSG))
 while start_action != 2:
     clear_console_subprocess()
     username = input('Enter Username: ')
-    password = input('Enter Password: ')
+    password = getpass.getpass('Enter Password: ')
     if not check_password(username, str(sh.hash_message_hex(password))):
         clear_console_subprocess()
         print("Username or password is incorrect.\n")
