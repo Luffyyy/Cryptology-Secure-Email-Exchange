@@ -1,6 +1,7 @@
 import secrets
 import chacha20 as ch20
 import elgamal as eg
+import dhkem as dhkem
 import rabin_signature as rs
 import shared as sh
 import json
@@ -19,38 +20,37 @@ user_data = {
 
 def send_message(from_user, to_user, msg):
     msg = f'\tTo: {to_user}\n\tFrom: {from_user}\n{msg}'
-    # Alice (Sender, Creates a key for Chacha20 and sends an Email to Bob)
-    
-    ## Chacha20 Symmetric Algorithm
-    chacha20_key = secrets.token_bytes(32)
-    cipher_email = ch20.encrypt(msg.encode(), chacha20_key) # Alice sends
+    # Alice (Sender)
 
-    ## KEM ElGamal: Get elgamal public gay from Bob
-    elgamal_pk = begin_message_transaction(to_user)
-    key_int = int.from_bytes(chacha20_key, "little")
-    elgamal_c1, elgamal_c2 = eg.encrypt(elgamal_pk, key_int) # Alice sends
+    ## KEM: Get encap key from Bob
+    kem_ek = begin_message_transaction(to_user)
+    capsule, chacha20_key = dhkem.encapsulate(kem_ek) # Get capsule + symmetric key (Chacha20)
+
+    ## Chacha20 Symmetric Algorithm
+    cipher_email = ch20.encrypt(msg.encode(), chacha20_key)
 
     ## Rabin Signature
     rabin_n, rabin_sk = rs.keygen(512)
     sign = rs.sign(msg, rabin_sk)
 
     ## Send the message to bob he recives it
-    receive_message(to_user, cipher_email, elgamal_c1, elgamal_c2, sign, rabin_n)
+    receive_message(to_user, cipher_email, capsule, sign, rabin_n)
 
 def begin_message_transaction(user):
-    # Bob (Reciever, creates public and private keys for KEM-ElGamal)
-    pk, sk = eg.keygen()
-    user_data[user]['elgamal_keys'] = (pk, sk)
+    # Bob (Reciever)
 
-    return pk
+    # KEM: Create encap and decap keys
+    ek, dk = dhkem.keygen()
+    user_data[user]['kem_keys'] = (ek, dk)
 
-def receive_message(to_user, cipher_email, elgamal_c1, elgamal_c2, sign, rabin_n):
+    return ek
+
+def receive_message(to_user, cipher_email, capsule, sign, rabin_n):
     # Bob (Decrypts key and decrypts email)
-    sk = user_data[to_user]['elgamal_keys'][1]
+    sk = user_data[to_user]['kem_keys'][1]
 
-    recovered_int = eg.decrypt(elgamal_c1, elgamal_c2, sk) # KEM-ElGamal Decrypt Chacha20 key
-    recovered_bytes = recovered_int.to_bytes(32, "little")
-    msg = ch20.encrypt(cipher_email, recovered_bytes).decode() # Chacha20 Decrypt message
+    chacha20_key = dhkem.decapsulate(capsule, sk) # Decapsulate the capsule and get Chacha20 key
+    msg = ch20.encrypt(cipher_email, chacha20_key).decode() # Chacha20 decrypt message
 
     ## Verify signature
     if rs.verify(msg, sign, rabin_n):
