@@ -8,8 +8,8 @@ This is a toy project combining three algorithms to "exchange" emails securely.
 
 ## Note
 There are two default users with the following credentialis:
-User: alice
-Password: cha2
+- User: alice Password: cha2
+- User: bob Password: cha0
 
-User: bob
-Password: cha0
+You must install the following library:
+- sympy
