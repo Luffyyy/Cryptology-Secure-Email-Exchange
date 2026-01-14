@@ -1,3 +1,8 @@
+# IMPORTANT
+# There are two default users:
+## Username: alice Password: cha2
+## Username: bob Password: cha0
+
 import chacha20 as ch20
 import dhkem as dhkem
 import rabin_signature as rs
