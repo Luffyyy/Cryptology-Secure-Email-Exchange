@@ -11,6 +11,7 @@ import json
 import subprocess
 import platform
 import getpass
+import secrets
 
 local_data = {
     'alice': {
@@ -37,13 +38,14 @@ def send_message(to_user, msg):
     capsule, chacha20_key = dhkem.encapsulate(kem_ek) # Get capsule + symmetric key (Chacha20)
 
     ## Chacha20 Symmetric Algorithm
-    cipher_email = ch20.encrypt(msg.encode(), chacha20_key)
+    iv = secrets.token_bytes(12)
+    cipher_email = ch20.encrypt(msg.encode(), chacha20_key, iv)
 
     ## Rabin Signature
     sign = rs.sign(msg, local_data[current_user]['rabin_sk'])
 
     ## Send the message to bob he recives it
-    receive_message(to_user, current_user, cipher_email, capsule, sign)
+    receive_message(to_user, current_user, cipher_email, iv, capsule, sign)
 
 def begin_message_transaction(user):
     # Bob (Reciever)
@@ -54,12 +56,12 @@ def begin_message_transaction(user):
 
     return ek
 
-def receive_message(to_user, from_user, cipher_email, capsule, sign):
+def receive_message(to_user, from_user, cipher_email, iv, capsule, sign):
     # Bob (Decrypts key and decrypts email)
     sk = local_data[to_user]['kem_keys'][1]
 
     chacha20_key = dhkem.decapsulate(capsule, sk) # Decapsulate the capsule and get Chacha20 key
-    msg = ch20.encrypt(cipher_email, chacha20_key).decode() # Chacha20 decrypt message
+    msg = ch20.encrypt(cipher_email, chacha20_key, iv).decode() # Chacha20 decrypt message
 
     ## Verify signature
     if rs.verify(msg, sign, public_data[from_user]['rabin_n']):
